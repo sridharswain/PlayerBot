@@ -12,12 +12,12 @@ pygame.init()
 
 #DISPLAY AND INITIATION
 gameDisplay = pygame.display.set_mode((display_width,display_height))
-pygame.display.set_caption("RL Game")
+pygame.display.set_caption("Chrome Dino")
 clock = pygame.time.Clock()
 
 gameDisplay.fill(white)
 
-agent = Player("res/agent.png",gameDisplay)
+agent = Player("res/agent.png",gameDisplay,clock)
 agent.setPlayerAt(player_init_position_X,player_init_position_Y)
 #agent.setPlayerAt(player_init_position_X+100,player_init_position_Y)
 
@@ -31,10 +31,9 @@ while not crashed:
             crashed=True
         elif (event.type==pygame.KEYDOWN and event.key==pygame.K_SPACE):
             if(agent.getPlayerPosition()[1]==player_init_position_Y):
-                agent.jump(25)
-    #agent.jump(5)
+                agent.jump(26)
     agent.setPlayerAt(x,player_init_position_Y)
     pygame.display.update()
-    clock.tick(100)
+    clock.tick(400)
 pygame.quit()
 quit()
