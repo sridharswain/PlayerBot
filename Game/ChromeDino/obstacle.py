@@ -19,8 +19,11 @@ class Obstacle:
         self.obstacle = pygame.image.load(imgPath)
         self.gameDisplay = gameDisplay
         self.clock=clock
-        self.imageSize = self.obstacle.get_rect().size
-        print(self.imageSize)
+        self.rect = self.obstacle.get_rect()
+        self.imageSize = self.rect.size
+
+    def getBoundary(self):
+        self.obstacle.get_rect()
 
     def addToDisplay(self,x,y):
         #gameDisplay.fill((255,255,255))

@@ -6,6 +6,7 @@ class Player:
         self.playerImage = pygame.image.load(imgPath)
         self.gameDisplay = gameDisplay
         self.clock=clock
+        self.rect = self.playerImage.get_rect()
 
     def setPlayerAt(self,x,y):
         self.gameDisplay.blit(self.playerImage,(x,y))

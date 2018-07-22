@@ -39,13 +39,24 @@ def updateFrame():
     pygame.display.update()
     global nCycles
     nCycles+=1
-    clock.tick(100)
+    clock.tick(80)
 
 def giveReward():
     global nCycles
     #nCycles=0
     global score
     score+=reward
+
+
+def onCollision():
+    print("Collided")
+
+def collisionDetected():
+    if(len(obstacles)==0):
+        return False
+    global obstacles
+    nearestCactus = obstacles[0]
+    return False #agent.rect.colliderect(nearestCactus.rect)
 
 def addObstacle():
     cactus = Obstacle(gameDisplay,clock)
@@ -75,7 +86,7 @@ while not crashed:
         if(event.type == pygame.QUIT):
             crashed=True
         elif (event.type==pygame.KEYDOWN and event.key == pygame.K_SPACE):
-            jump() #START JUMP ACTION
+            jump() # START JUMP ACTION
 
     currentY +=playerDirection
     agent.setPlayerAt(player_init_position_X,player_init_position_Y+currentY)
@@ -84,8 +95,7 @@ while not crashed:
         giveReward() # INCREASE THE SCORE OF THE PLAYER
 
     if(nCycles%obstacle_spawn_rate == 0):
-        print("added")
-        addObstacle() #ADD A NEW OBSTACLE TO THE SCENCE
+        addObstacle() # ADD A NEW OBSTACLE TO THE SCENCE
 
     moveObstaclesLeft() # MOVE OBSTACLES TOWARDS LEFT
 
@@ -95,7 +105,9 @@ while not crashed:
     elif currentY<=playerJumpHeight:
         playerDirection=playerJumpStrength
 
-    updateFrame() #DRAW ALL THE ELEMENTS OF THE SCENE ON THE SCREEN
+    updateFrame() # DRAW ALL THE ELEMENTS OF THE SCENE ON THE SCREEN
+    if(collisionDetected()):
+        onCollision()
 
 
 
