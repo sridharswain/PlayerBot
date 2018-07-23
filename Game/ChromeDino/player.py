@@ -1,7 +1,7 @@
 import pygame
 import math
 
-class Player:
+class Player(object):
     def __init__(self,imgPath,gameDisplay,clock):
         self.playerImage = pygame.image.load(imgPath)
         self.gameDisplay = gameDisplay
@@ -9,9 +9,12 @@ class Player:
         self.rect = self.playerImage.get_rect()
 
     def setPlayerAt(self,x,y):
-        self.gameDisplay.blit(self.playerImage,(x,y))
         self.x=x
         self.y=y
+        self.rect.x=x
+        self.rect.y=y
+        self.gameDisplay.blit(self.playerImage,self.rect)
+        pygame.draw.rect(self.playerImage, (255,0,0), self.rect, 1)
 
     def getPlayer(self):
         return self.playerImage

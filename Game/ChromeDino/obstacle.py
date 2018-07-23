@@ -1,7 +1,7 @@
 import pygame
 import random
 
-class Obstacle:
+class Obstacle(object):
     def __init__(self,gameDisplay,clock):
         images = ["obstacle_small_1","obstacle_small_2","obstacle_small_3","obstacle_large_2","obstacle_large_3"]
         randomInt = random.randint(0,11)
@@ -27,11 +27,19 @@ class Obstacle:
 
     def addToDisplay(self,x,y):
         #gameDisplay.fill((255,255,255))
-        self.gameDisplay.blit(self.obstacle,(x,y+(50-self.imageSize[1])))
         self.x = x
-        self.y = y
+        self.y = y+(50-self.imageSize[1])
+        self.rect.x=x
+        self.rect.y=y
+        self.gameDisplay.blit(self.obstacle,self.rect)
+        pygame.draw.rect(self.obstacle, (255,0,0), self.rect, 1)
 
     def moveLeftBy(self,rate):
         self.x-=rate
-        self.gameDisplay.blit(self.obstacle,(self.x,self.y+(50-self.imageSize[1])))
+        #self.y = y+(50-self.imageSize[1])
+        self.rect.x=self.x
+        self.rect.y=self.y
+        self.gameDisplay.blit(self.obstacle,self.rect)
+        self.gameDisplay.blit(self.obstacle,self.rect)
+        #pygame.draw.rect(self.obstacle, (255,0,0), self.rect, 1)
         return self.x

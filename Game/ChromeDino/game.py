@@ -22,43 +22,30 @@ rewardRate = 20 # AFTER 20 FRAMES REWARD IS GOING TO BE ADDED TO SCORE
 nCycles = 0 #NUMBER OF CYCLES COMPLETED
 obstacles = [] #LIST OF ALL OBSTACLE OF THE SCENE
 
-#INITIATION
-pygame.init()
 
-#DISPLAY AND INITIATION
-gameDisplay = pygame.display.set_mode((display_width,display_height))
-pygame.display.set_caption("Chrome Dino")
-clock = pygame.time.Clock()
 
-gameDisplay.fill(white)
 
-agent = Player("res/agent.png",gameDisplay,clock)
-agent.setPlayerAt(player_init_position_X,player_init_position_Y)
-
-def updateFrame():
+def updateFrame(clock):
     pygame.display.update()
     global nCycles
     nCycles+=1
     clock.tick(80)
 
 def giveReward():
-    global nCycles
-    #nCycles=0
     global score
     score+=reward
-
 
 def onCollision():
     print("Collided")
 
 def collisionDetected():
+    global obstacles
     if(len(obstacles)==0):
         return False
-    global obstacles
     nearestCactus = obstacles[0]
-    return False #agent.rect.colliderect(nearestCactus.rect)
+    return pygame.sprite.collide_rect(agent,nearestCactus)
 
-def addObstacle():
+def addObstacle(gameDisplay,clock):
     cactus = Obstacle(gameDisplay,clock)
     cactus.addToDisplay(obstacle_init_position_X,obstacle_init_position_Y)
     global obstacles
@@ -72,44 +59,66 @@ def moveObstaclesLeft():
         cactusX = cactus.moveLeftBy(obstacle_movement_rate)
         if(cactusX <= 0):
             obstacles.remove(cactus)
+            del cactus
 
 def jump():
     global playerDirection
     playerDirection = -1*playerJumpStrength
 
+def runAtFrame(callback):
+    global frameFunc
+    frameFunc = callback
 
-crashed = False
-x = player_init_position_X
-while not crashed:
+def startEnvironment(callback = None):
+    #INITIATION
+    global agent
+    global crashed
+    global currentY
+    global playerDirection
+    pygame.init()
+
+    #DISPLAY AND INITIATION
+    gameDisplay = pygame.display.set_mode((display_width,display_height))
+    pygame.display.set_caption("Chrome Dino")
+    clock = pygame.time.Clock()
+
     gameDisplay.fill(white)
-    for event in pygame.event.get():
-        if(event.type == pygame.QUIT):
-            crashed=True
-        elif (event.type==pygame.KEYDOWN and event.key == pygame.K_SPACE):
-            jump() # START JUMP ACTION
-
-    currentY +=playerDirection
-    agent.setPlayerAt(player_init_position_X,player_init_position_Y+currentY)
-
-    if(nCycles%rewardRate == 0):
-        giveReward() # INCREASE THE SCORE OF THE PLAYER
-
-    if(nCycles%obstacle_spawn_rate == 0):
-        addObstacle() # ADD A NEW OBSTACLE TO THE SCENCE
-
-    moveObstaclesLeft() # MOVE OBSTACLES TOWARDS LEFT
-
-    if(currentY>=player_init_position_Y):
-        playerDirection=0
-        currentY = player_init_position_Y
-    elif currentY<=playerJumpHeight:
-        playerDirection=playerJumpStrength
-
-    updateFrame() # DRAW ALL THE ELEMENTS OF THE SCENE ON THE SCREEN
-    if(collisionDetected()):
-        onCollision()
+    agent = Player("res/agent.png",gameDisplay,clock)
+    agent.setPlayerAt(player_init_position_X,player_init_position_Y)
 
 
+    crashed = False
+    x = player_init_position_X
+    while not crashed:
+        gameDisplay.fill(white)
+        for event in pygame.event.get():
+            if(event.type == pygame.QUIT):
+                crashed=True
+            elif (event.type==pygame.KEYDOWN and event.key == pygame.K_SPACE):
+                jump() # START JUMP ACTION
 
-pygame.quit()
-quit()
+        currentY +=playerDirection
+        agent.setPlayerAt(player_init_position_X,player_init_position_Y+currentY)
+
+        if(nCycles%rewardRate == 0):
+            giveReward() # INCREASE THE SCORE OF THE PLAYER
+
+        if(nCycles%obstacle_spawn_rate == 0):
+            addObstacle(gameDisplay,clock) # ADD A NEW OBSTACLE TO THE SCENCE
+
+        moveObstaclesLeft() # MOVE OBSTACLES TOWARDS LEFT
+
+        if(currentY >= player_init_position_Y):
+            playerDirection=0
+            currentY = player_init_position_Y
+        elif currentY <= playerJumpHeight:
+            playerDirection=playerJumpStrength
+
+        updateFrame(clock) # DRAW ALL THE ELEMENTS OF THE SCENE ON THE SCREEN
+        if(collisionDetected()):
+            print("d")
+
+    pygame.quit()
+    quit()
+
+startEnvironment()
