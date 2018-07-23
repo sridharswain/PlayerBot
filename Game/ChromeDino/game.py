@@ -34,9 +34,11 @@ def updateFrame(clock):
     nCycles+=1
     clock.tick(frameRate)
 
-def giveReward():
+def giveReward(scoreUpdated):
     global score
     score+=reward
+    if(scoreUpdated!=None):
+        scoreUpdated(score)
 
 def onCollision():
     print("Collided")
@@ -127,16 +129,17 @@ def init():
     pygame.display.set_caption("Chrome Dino")
     clock = pygame.time.Clock()
 
-def restart(onFrameUpdate=None,onCollide=None, onJump=None, onCrossedObstacle=None):
+def restart(onFrameUpdate=None,onCollide=None, onJump=None, onCrossedObstacle=None,scoreUpdated=None):
     init()
     startEnvironment(onFrameUpdate,onCollide, onJump, onCrossedObstacle)
 
 
-def startEnvironment(onFrameUpdate=None, onCollide=None, onJump=None, onCrossedObstacle=None):
+def startEnvironment(onFrameUpdate=None, onCollide=None, onJump=None, onCrossedObstacle=None,scoreUpdated=None):
     global agent
     global crashed
     global currentY
     global playerDirection
+    global obstacle_movement_rate
     gameDisplay.fill(white)
     agent = Player("res/agent.png",gameDisplay)
     agent.setPlayerAt(player_init_position_X,player_init_position_Y)
@@ -152,7 +155,7 @@ def startEnvironment(onFrameUpdate=None, onCollide=None, onJump=None, onCrossedO
                 if(event.key == pygame.K_SPACE):
                     jumpAction(onJump) # START JUMP ACTION
                 elif(event.key == pygame.K_x):
-                    restart(onFrameUpdate,onCollide,onJump,onCrossedObstacle)
+                    restart(onFrameUpdate,onCollide,onJump,onCrossedObstacle,scoreUpdated)
                     return
 
 
@@ -160,7 +163,7 @@ def startEnvironment(onFrameUpdate=None, onCollide=None, onJump=None, onCrossedO
         agent.setPlayerAt(player_init_position_X,player_init_position_Y+currentY)
 
         if(nCycles%rewardRate == 0):
-            giveReward() # INCREASE THE SCORE OF THE PLAYER
+            giveReward(scoreUpdated) # INCREASE THE SCORE OF THE PLAYER
 
         if(nCycles%obstacle_spawn_rate == 0):
             addObstacle(gameDisplay,clock) # ADD A NEW OBSTACLE TO THE SCENCE
@@ -177,7 +180,7 @@ def startEnvironment(onFrameUpdate=None, onCollide=None, onJump=None, onCrossedO
         #print(nextObstacleInformation())
         if(collisionDetected()):
             if(onCollide != None):
-                onCollide() # CALL THE METHOD FROM TRAIN WHEN COLLISION IS DETECTED
+                onCollide(score) # CALL THE METHOD FROM TRAIN WHEN COLLISION IS DETECTED
                 return
         if(onCrossedObstacle!=None and hasCrossedObstacle()):
             nextObstacleInfo = nextObstacleInformation()
