@@ -2,7 +2,7 @@ import pygame
 import random
 
 class Obstacle(object):
-    def __init__(self,gameDisplay,clock):
+    def __init__(self,gameDisplay):
         images = ["obstacle_small_1","obstacle_small_2","obstacle_small_3","obstacle_large_2","obstacle_large_3"]
         randomInt = random.randint(0,11)
         if(randomInt < 3):
@@ -18,9 +18,9 @@ class Obstacle(object):
         imgPath = "res/"+images[imgPath]+".png"
         self.obstacle = pygame.image.load(imgPath)
         self.gameDisplay = gameDisplay
-        self.clock=clock
         self.rect = self.obstacle.get_rect()
         self.imageSize = self.rect.size
+        pygame.draw.rect(self.obstacle, (255,0,0), self.rect, 1)
 
     def getBoundary(self):
         self.obstacle.get_rect()
@@ -40,6 +40,4 @@ class Obstacle(object):
         self.rect.x=self.x
         self.rect.y=self.y
         self.gameDisplay.blit(self.obstacle,self.rect)
-        self.gameDisplay.blit(self.obstacle,self.rect)
-        #pygame.draw.rect(self.obstacle, (255,0,0), self.rect, 1)
         return self.x
