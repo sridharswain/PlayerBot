@@ -3,9 +3,10 @@ import random
 
 class Obstacle(object):
     def __init__(self,gameDisplay):
-        images = ["obstacle_small_1","obstacle_small_2","obstacle_small_3","obstacle_large_2","obstacle_large_3"]
-        randomInt = random.randint(0,11)
-        if(randomInt < 3):
+        self.isBird = False
+        images = ["obstacle_small_1","obstacle_small_2","obstacle_small_3","obstacle_large_2","obstacle_large_3","bird_up"]
+        randomInt = random.randint(0,5)
+        '''if(randomInt < 3):
             imgPath = 0
         elif(randomInt < 6):
             imgPath = 1
@@ -14,8 +15,10 @@ class Obstacle(object):
         elif(randomInt < 10):
             imgPath = 3
         else:
-            imgPath = 4
-        imgPath = "res/"+images[imgPath]+".png"
+            imgPath = 4'''
+        imgPath = "res/"+images[randomInt]+".png"
+        if(randomInt == 5):
+            self.isBird = True
         self.obstacle = pygame.image.load(imgPath)
         self.gameDisplay = gameDisplay
         self.rect = self.obstacle.get_rect()
@@ -28,9 +31,13 @@ class Obstacle(object):
     def addToDisplay(self,x,y):
         #gameDisplay.fill((255,255,255))
         self.x = x
-        self.y = y+(50-self.imageSize[1])
-        self.rect.x=x
-        self.rect.y=y
+        self.y = y
+        if(not self.isBird):
+            self.y += (50-self.imageSize[1])
+        else:
+            self.y -= (50-self.imageSize[1]) + 5
+        self.rect.x=self.x
+        self.rect.y=self.y
         self.gameDisplay.blit(self.obstacle,self.rect)
         pygame.draw.rect(self.obstacle, (255,0,0), self.rect, 1)
 

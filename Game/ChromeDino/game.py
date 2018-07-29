@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import pygame
 import time
+import random
 from player import Player
 from obstacle import Obstacle
 
@@ -11,8 +12,11 @@ player_init_position_Y = 150
 obstacle_init_position_X = 1200
 obstacle_init_position_Y = 300
 white = (255,255,255)
-playerJumpStrength = 3.5 # RATE WHICH THE TREX MOVES UP AND DOWN
-playerJumpHeight = player_init_position_Y-110 # HEIGHT TO WHICH AGENT IS GOING TO JUMP
+black = (0,0,0)
+playerJumpStrength = 3 # RATE WHICH THE TREX MOVES UP AND DOWN
+playerJumpHeight = player_init_position_Y-85 # HEIGHT TO WHICH AGENT IS GOING TO JUMP
+movement_change_cycle = 1050000
+duck_count_limit = 30
 
 currentY=player_init_position_Y # CURRENT ELEVATION OF PLAYER
 playerDirection = 0 # 0 : PLAYER AT GROUND; -1 : PLAYER IS GOING UP; 1 : PLAYER IS GOING DOWN
@@ -22,23 +26,42 @@ score = 0 # CURRENT SCORE
 reward = 1 # AMOUNT TO BE ADDED TO SCORE
 rewardRate = 20 # AFTER 20 FRAMES REWARD IS GOING TO BE ADDED TO SCORE
 nCycles = 0 #NUMBER OF CYCLES COMPLETED
+spawnCycle = 0
+movementRateCycle = 0
 obstacles = [] #LIST OF ALL OBSTACLE OF THE SCENE
-frameRate = 200 # CLOCK/FRAME RATE
+frameRate = 800 # CLOCK/FRAME RATE
+spawnRateLowerBound = 80
+spawnRateHigherBound = 150
+shouldDuck = False
+duckCount = 0
+episodes = 0
 
 
+def text_objects(text, font):
+    textSurface = font.render(text, True, black)
+    return textSurface, textSurface.get_rect()
+
+def message_display(text,x,y):
+    largeText = pygame.font.Font('freesansbold.ttf',20)
+    TextSurf, TextRect = text_objects(text, largeText)
+    TextRect.center = ((x),(y))
+    gameDisplay.blit(TextSurf, TextRect)
 
 
 def updateFrame(clock):
-    pygame.display.update()
+    global spawnCycle
+    global movementRateCycle
     global nCycles
+    movementRateCycle+=1
+    pygame.display.update()
     nCycles+=1
+    spawnCycle+=1
+
     clock.tick(frameRate)
 
-def giveReward(scoreUpdated):
+def giveReward():
     global score
     score+=reward
-    if(scoreUpdated!=None):
-        scoreUpdated(score)
 
 def onCollision():
     print("Collided")
@@ -60,6 +83,7 @@ def addObstacle(gameDisplay,clock):
 
 def moveObstaclesLeft():
     global obstacles
+    global obstacle_movement_rate
     if(len(obstacles)==0):
         return
     for cactus in obstacles:
@@ -68,12 +92,14 @@ def moveObstaclesLeft():
             obstacles.remove(cactus)
             del cactus
 
-def jumpAction(onJump):
+def jumpAction():
     global playerDirection
+    global obstacle_movement_rate
     playerDirection = -1*playerJumpStrength
-    if(onJump!=None):
-        nextObstacleInfo = nextObstacleInformation()
-        onJump(nextObstacleInfo[0],nextObstacleInfo[1],nextObstacleInfo[2],frameRate)
+
+def duckAction():
+    global duckCount
+    duckCount=1
 
 def nextObstacleInformation():
     global obstacles
@@ -93,33 +119,54 @@ def hasCrossedObstacle():
     cactusX = obstacles[0].rect.x+(obstacles[0].rect.x/2)
     return (agentX > cactusX)
 
+def updateMovementRate():
+    global movementRateCycle
+    global movement_change_cycle
+    global obstacle_movement_rate
+    global display_width
+    global spawnRateLowerBound
+    global spawnRateHigherBound
+    if(movementRateCycle%movement_change_cycle == 0 and obstacle_movement_rate < 7.5):
+        obstacle_movement_rate += 0.2
+        movementRateCycle = 0
+        if(spawnRateLowerBound < spawnRateHigherBound-45):
+            spawnRateLowerBound += 40
+
+def resetMovementRate():
+    global spawnRateLowerBound
+    global spawnRateHigherBound
+    global obstacle_spawn_rate
+    global obstacle_movement_rate
+    spawnRateLowerBound = 80
+    spawnRateHigherBound = 150
+    obstacle_movement_rate = 3.5
+    obstacle_spawn_rate = 160
+
+def resetWithMovementRate():
+    reset()
+    resetMovementRate()
 
 def reset():
     global score
     global currentY
     global playerDirection
-    global obstacle_spawn_rate
-    global obstacle_movement_rate
     global rewardRate
     global reward
     global nCycles
     global obstacles
-    global frameRate
+    global spawnCycle
     score=0
     currentY = player_init_position_Y
     playerDirection=0
-    obstacle_spawn_rate = 160
-    obstacle_movement_rate = 3.5
     rewardRate = 20
     reward=1
     nCycles=0
     obstacles=[]
-    frameRate=80
+    spawnCycle = 0
     #time.sleep(2)
 
 def init():
     #INITIATION
-    reset()
     global clock
     global gameDisplay
     pygame.init()
@@ -129,20 +176,37 @@ def init():
     pygame.display.set_caption("Chrome Dino")
     clock = pygame.time.Clock()
 
-def restart(onFrameUpdate=None,onCollide=None, onJump=None, onCrossedObstacle=None,scoreUpdated=None):
+def restart(onFrameUpdate=None,onCollide=None, onCrossedObstacle=None):
+    resetWithMovementRate()
     init()
-    startEnvironment(onFrameUpdate,onCollide, onJump, onCrossedObstacle)
+    startEnvironment(onFrameUpdate,onCollide, onCrossedObstacle)
+
+def restartWithMovementRate(onFrameUpdate=None,onCollide=None, onCrossedObstacle=None):
+    reset()
+    init()
+    startEnvironment(onFrameUpdate,onCollide, onCrossedObstacle)
+
+def changeEpisode():
+    global episodes
+    episodes+=1
 
 
-def startEnvironment(onFrameUpdate=None, onCollide=None, onJump=None, onCrossedObstacle=None,scoreUpdated=None):
+def startEnvironment(onFrameUpdate=None, onCollide=None, onCrossedObstacle=None):
     global agent
     global crashed
     global currentY
     global playerDirection
     global obstacle_movement_rate
+    global spawnCycle
+    global obstacle_spawn_rate
+    global shouldDuck
+    global spawnRateLowerBound
+    global spawnRateHigherBound
+    global episodes
+    global duckCount
     gameDisplay.fill(white)
-    agent = Player("res/agent.png",gameDisplay)
-    agent.setPlayerAt(player_init_position_X,player_init_position_Y)
+    agent = Player(gameDisplay)
+    agent.setPlayerAt(player_init_position_X,player_init_position_Y,False)
 
     crashed = False
     x = player_init_position_X
@@ -153,20 +217,29 @@ def startEnvironment(onFrameUpdate=None, onCollide=None, onJump=None, onCrossedO
                 crashed=True
             elif (event.type==pygame.KEYDOWN):
                 if(event.key == pygame.K_SPACE):
-                    jumpAction(onJump) # START JUMP ACTION
+                    jumpAction() # START JUMP ACTION
+                elif(event.key == pygame.K_DOWN):
+                    duckAction()
                 elif(event.key == pygame.K_x):
-                    restart(onFrameUpdate,onCollide,onJump,onCrossedObstacle,scoreUpdated)
+                    restart(onFrameUpdate,onCollide,onCrossedObstacle)
                     return
 
 
-        currentY +=playerDirection # CHANGE Y POSITION ACCORDING TO DIRECTION OF JUMP
-        agent.setPlayerAt(player_init_position_X,player_init_position_Y+currentY)
-
+        currentY += playerDirection # CHANGE Y POSITION ACCORDING TO DIRECTION OF JUMP
+        agent.setPlayerAt(player_init_position_X,player_init_position_Y+currentY,duckCount != 0)
+        if(duckCount%duck_count_limit != 0):
+            duckCount+=1
+        else:
+            duckCount=0
         if(nCycles%rewardRate == 0):
-            giveReward(scoreUpdated) # INCREASE THE SCORE OF THE PLAYER
+            giveReward() # INCREASE THE SCORE OF THE PLAYER
 
-        if(nCycles%obstacle_spawn_rate == 0):
+        updateMovementRate()
+
+        if(spawnCycle%obstacle_spawn_rate == 0):
             addObstacle(gameDisplay,clock) # ADD A NEW OBSTACLE TO THE SCENCE
+            obstacle_spawn_rate = random.randint(spawnRateLowerBound,spawnRateHigherBound)
+            spawnCycle = 0
 
         moveObstaclesLeft() # MOVE OBSTACLES TOWARDS LEFT
 
@@ -176,20 +249,40 @@ def startEnvironment(onFrameUpdate=None, onCollide=None, onJump=None, onCrossedO
         elif currentY <= playerJumpHeight:
             playerDirection=playerJumpStrength
 
+        message_display("Episode : "+str(episodes),70,30)
+        message_display("Movement Rate : "+str(obstacle_movement_rate),650,30)
+        message_display("Score : "+str(score),1100,30)
+
         updateFrame(clock) # DRAW ALL THE ELEMENTS OF THE SCENE ON THE SCREEN
-        #print(nextObstacleInformation())
+
         if(collisionDetected()):
             if(onCollide != None):
-                onCollide(score) # CALL THE METHOD FROM TRAIN WHEN COLLISION IS DETECTED
+                nextObstacleInfo = nextObstacleInformation()
+                 #CALL THE METHOD FROM TRAIN WHEN COLLISION IS DETECTED
+                onCollide(score,
+                (currentY != player_init_position_Y),
+                duckCount != 0,
+                nextObstacleInfo[0],
+                nextObstacleInfo[1],
+                nextObstacleInfo[2],
+                obstacle_movement_rate)
                 return
         if(onCrossedObstacle!=None and hasCrossedObstacle()):
             nextObstacleInfo = nextObstacleInformation()
             del obstacles[0]
-            onCrossedObstacle(nextObstacleInfo[0],nextObstacleInfo[1],nextObstacleInfo[2],frameRate)
+            onCrossedObstacle(nextObstacleInfo[0],
+            nextObstacleInfo[1],
+            nextObstacleInfo[2],
+            obstacle_movement_rate)
 
         if(onFrameUpdate != None):
             nextObstacleInfo = nextObstacleInformation()
-            onFrameUpdate((currentY != player_init_position_Y),nextObstacleInfo[0],nextObstacleInfo[1],nextObstacleInfo[2],frameRate)
+            onFrameUpdate((currentY != player_init_position_Y),
+            duckCount != 0,
+            nextObstacleInfo[0],
+            nextObstacleInfo[1],
+            nextObstacleInfo[2],
+            obstacle_movement_rate)
     pygame.quit()
 #init()
 #startEnvironment()
