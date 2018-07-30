@@ -16,7 +16,7 @@ black = (0,0,0)
 playerJumpStrength = 3 # RATE WHICH THE TREX MOVES UP AND DOWN
 playerJumpHeight = player_init_position_Y-85 # HEIGHT TO WHICH AGENT IS GOING TO JUMP
 movement_change_cycle = 1050000
-duck_count_limit = 30
+duck_count_limit = 50
 
 currentY=player_init_position_Y # CURRENT ELEVATION OF PLAYER
 playerDirection = 0 # 0 : PLAYER AT GROUND; -1 : PLAYER IS GOING UP; 1 : PLAYER IS GOING DOWN
@@ -176,22 +176,22 @@ def init():
     pygame.display.set_caption("Chrome Dino")
     clock = pygame.time.Clock()
 
-def restart(onFrameUpdate=None,onCollide=None, onCrossedObstacle=None):
+def restart(onFrameUpdate=None,onCollide=None, onCrossedObstacle=None,onExit=None):
     resetWithMovementRate()
     init()
-    startEnvironment(onFrameUpdate,onCollide, onCrossedObstacle)
+    startEnvironment(onFrameUpdate,onCollide, onCrossedObstacle,onExit)
 
-def restartWithMovementRate(onFrameUpdate=None,onCollide=None, onCrossedObstacle=None):
+def restartWithMovementRate(onFrameUpdate=None,onCollide=None, onCrossedObstacle=None,onExit=None):
     reset()
     init()
-    startEnvironment(onFrameUpdate,onCollide, onCrossedObstacle)
+    startEnvironment(onFrameUpdate,onCollide, onCrossedObstacle,onExit)
 
 def changeEpisode():
     global episodes
     episodes+=1
 
 
-def startEnvironment(onFrameUpdate=None, onCollide=None, onCrossedObstacle=None):
+def startEnvironment(onFrameUpdate=None, onCollide=None, onCrossedObstacle=None,onExit=None):
     global agent
     global crashed
     global currentY
@@ -214,6 +214,7 @@ def startEnvironment(onFrameUpdate=None, onCollide=None, onCrossedObstacle=None)
         gameDisplay.fill(white)
         for event in pygame.event.get():
             if(event.type == pygame.QUIT):
+                onExit(score)
                 crashed=True
             elif (event.type==pygame.KEYDOWN):
                 if(event.key == pygame.K_SPACE):
@@ -221,7 +222,7 @@ def startEnvironment(onFrameUpdate=None, onCollide=None, onCrossedObstacle=None)
                 elif(event.key == pygame.K_DOWN):
                     duckAction()
                 elif(event.key == pygame.K_x):
-                    restart(onFrameUpdate,onCollide,onCrossedObstacle)
+                    restart(onFrameUpdate,onCollide,onCrossedObstacle,onExit)
                     return
 
 
